@@ -1,2 +1,1 @@
 **/__snapshots__/** linguist-generated=true
-cypress/fixtures/logstash/data.json.txt filter=lfs diff=lfs merge=lfs -text
