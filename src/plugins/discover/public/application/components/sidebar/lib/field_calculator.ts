@@ -31,6 +31,7 @@
 import { i18n } from '@osd/i18n';
 import { IndexPattern, IndexPatternField } from 'src/plugins/data/public';
 import { FieldValueCounts } from '../types';
+import { TOP_VALUES_LIMIT } from './constants';
 
 const NO_ANALYSIS_TYPES = ['geo_point', 'geo_shape', 'attachment'];
 
@@ -52,7 +53,7 @@ const getFieldValues = ({ hits, field, indexPattern }: FieldValuesParams) => {
 };
 
 const getFieldValueCounts = (params: FieldValueCountsParams): FieldValueCounts => {
-  const { hits, field, indexPattern, count = 5, grouped = false } = params;
+  const { hits, field, indexPattern, count = TOP_VALUES_LIMIT, grouped = false } = params;
   const { type: fieldType } = field;
 
   if (NO_ANALYSIS_TYPES.includes(fieldType)) {

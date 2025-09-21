@@ -30,7 +30,8 @@
 
 // @ts-ignore
 import { i18n } from '@osd/i18n';
-import { getFieldValueCounts } from './field_calculator';
+import { getFieldValueCounts, getFieldValues, groupValues } from './field_calculator';
+import { TOP_VALUES_LIMIT, RARE_VALUES_LIMIT } from './constants';
 import { IndexPattern, IndexPatternField } from '../../../../../../data/public';
 
 export function getDetails(
@@ -52,20 +53,48 @@ export function getDetails(
       }),
     };
   }
+  // Base details using existing calculator (now defaults to TOP_VALUES_LIMIT)
+  const base = getFieldValueCounts({
+    hits,
+    field,
+    indexPattern,
+    count: TOP_VALUES_LIMIT,
+    grouped: false,
+  });
+
+  // Derive unique count and rare buckets from all values in current hits
+  const allValues = getFieldValues({ hits, field, indexPattern });
+  const missing = allValues.filter((v) => v === undefined || v === null).length;
+  const groups = groupValues(allValues, false);
+  const uniqueCount = Object.keys(groups).length;
+  const denominator = Math.max(1, hits.length - missing);
+  const bucketsAll = Object.keys(groups)
+    .map((key) => ({
+      value: (groups as any)[key].value,
+      count: (groups as any)[key].count,
+      percent: ((groups as any)[key].count / denominator) * 100,
+      display: '', // fill below
+    }));
+
+  // Top buckets (desc) and rare buckets (asc)
+  const topBuckets = [...bucketsAll]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, TOP_VALUES_LIMIT);
+  const rareBuckets = [...bucketsAll]
+    .sort((a, b) => a.count - b.count)
+    .slice(0, RARE_VALUES_LIMIT);
+
+  // Apply field formatter for display
+  for (const b of [...topBuckets, ...rareBuckets]) {
+    (b as any).display = indexPattern.getFormatterForField(field).convert(b.value);
+  }
+
   const details = {
     ...defaultDetails,
-    ...getFieldValueCounts({
-      hits,
-      field,
-      indexPattern,
-      count: 5,
-      grouped: false,
-    }),
-  };
-  if (details.buckets) {
-    for (const bucket of details.buckets) {
-      bucket.display = indexPattern.getFormatterForField(field).convert(bucket.value);
-    }
-  }
+    ...base,
+    buckets: topBuckets,
+    uniqueCount,
+    rareBuckets,
+  } as any;
   return details;
 }

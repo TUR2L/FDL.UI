@@ -128,21 +128,14 @@ export function DiscoverFieldDetails({
       {!details.error && (
         <EuiPopoverFooter>
           <EuiText size="xs" textAlign="center">
-            {!indexPattern.metaFields.includes(field.name) && !field.scripted ? (
-              <EuiLink onClick={() => onAddFilter('_exists_', field.name, '+')}>
-                <FormattedMessage
-                  id="discover.fieldChooser.detailViews.existsText"
-                  defaultMessage="Exists in"
-                />{' '}
-                {details.exists}
-              </EuiLink>
-            ) : (
-              <span>{details.exists}</span>
-            )}{' '}
-            / {details.total}{' '}
+            {/* "X Values, Y% of events" */}
             <FormattedMessage
-              id="discover.fieldChooser.detailViews.recordsText"
-              defaultMessage="records"
+              id="discover.fieldChooser.detailViews.valuesAndEvents"
+              defaultMessage="{x} Values, {y}% of events"
+              values={{
+                x: details.uniqueCount ?? details.buckets.length,
+                y: ((details.exists / Math.max(1, details.total)) * 100).toFixed(2),
+              }}
             />
           </EuiText>
         </EuiPopoverFooter>

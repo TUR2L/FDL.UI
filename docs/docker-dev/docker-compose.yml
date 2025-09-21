@@ -42,6 +42,7 @@ services:
       - 'REPO_URL=${REPO_URL}'
     volumes:
       - osd-dev:/home/osd-dev
+      - ../../:/home/osd-dev/OpenSearch-Dashboards
       - ./entrypoint.sh:/entrypoint.sh
     networks:
       - opensearch-net

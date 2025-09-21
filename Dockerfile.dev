@@ -1,0 +1,21 @@
+ARG NODE_VERSION=20.18.3
+FROM node:${NODE_VERSION}
+
+WORKDIR /app
+
+# System deps often needed by OSD dev server
+RUN apt-get update && \
+    apt-get -y install git openssh-client python3 build-essential \
+      libxss1 libnss3 libgtk-3-0 libasound2 libc6 libx11-6 libx11-xcb1 libxcomposite1 libxdamage1 \
+      libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 ca-certificates dos2unix && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+# Bootstrap the repo (installs deps and builds types)
+RUN dos2unix scripts/use_node && chmod +x scripts/use_node && yarn osd bootstrap --network-timeout 600000
+
+ENV SERVER_HOST=0.0.0.0
+EXPOSE 5601 5603
+
+CMD ["yarn", "start:docker"]

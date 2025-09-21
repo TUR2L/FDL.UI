@@ -38,6 +38,8 @@ export interface FieldDetails {
   exists: number;
   total: number;
   buckets: Bucket[];
+  uniqueCount?: number;
+  rareBuckets?: Bucket[];
 }
 
 export interface FieldValueCounts extends Partial<FieldDetails> {

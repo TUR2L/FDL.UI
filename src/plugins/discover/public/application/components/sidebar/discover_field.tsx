@@ -37,9 +37,12 @@ import {
   EuiFlexGroup,
   EuiFlexItem,
   EuiText,
+  EuiButtonGroup,
+  EuiSpacer,
 } from '@elastic/eui';
 import { i18n } from '@osd/i18n';
 import { DiscoverFieldDetails } from './discover_field_details';
+import { TOP_VALUES_LIMIT } from './lib/constants';
 import { FieldIcon } from '../../../../../opensearch_dashboards_react/public';
 import { FieldDetails } from './types';
 import { IndexPatternField, IndexPattern } from '../../../../../data/public';
@@ -116,6 +119,7 @@ export const DiscoverField = ({
   const isSourceField = field.name === '_source';
 
   const [infoIsOpen, setOpen] = useState(false);
+  const [valuesMode, setValuesMode] = useState<'top' | 'rare'>('top');
 
   const toggleDisplay = (f: IndexPatternField) => {
     if (selected) {
@@ -238,14 +242,50 @@ export const DiscoverField = ({
           >
             <EuiPopoverTitle tabIndex={0}>
               {' '}
-              {i18n.translate('discover.fieldChooser.discoverField.fieldTopValuesLabel', {
-                defaultMessage: 'Top 5 values',
-              })}
+              {valuesMode === 'top'
+                ? i18n.translate('discover.fieldChooser.discoverField.fieldTopValuesLabel', {
+                    defaultMessage: 'Top {limit} values',
+                    values: { limit: TOP_VALUES_LIMIT },
+                  })
+                : i18n.translate('discover.fieldChooser.discoverField.fieldRareValuesLabel', {
+                    defaultMessage: 'Rare values',
+                  })}
             </EuiPopoverTitle>
+            <EuiSpacer size="xs" />
+            <EuiButtonGroup
+              legend={i18n.translate('discover.fieldChooser.discoverField.valuesModeLegend', {
+                defaultMessage: 'Values mode',
+              })}
+              options={[
+                {
+                  id: 'top',
+                  label: i18n.translate('discover.fieldChooser.discoverField.topValuesTab', {
+                    defaultMessage: 'Top values',
+                  }),
+                },
+                {
+                  id: 'rare',
+                  label: i18n.translate('discover.fieldChooser.discoverField.rareValuesTab', {
+                    defaultMessage: 'Rare values',
+                  }),
+                },
+              ]}
+              idSelected={valuesMode}
+              onChange={(id) => setValuesMode(id as 'top' | 'rare')}
+              buttonSize="compressed"
+              isFullWidth
+            />
+            <EuiSpacer size="s" />
             {infoIsOpen && (
               <DiscoverFieldDetails
                 columns={columns}
-                details={getDetails(field)}
+                details={(function () {
+                  const base = getDetails(field);
+                  if ((base as any).rareBuckets && valuesMode === 'rare') {
+                    return { ...(base as any), buckets: (base as any).rareBuckets } as any;
+                  }
+                  return base;
+                })()}
                 field={field}
                 indexPattern={indexPattern}
                 onAddFilter={onAddFilter}
